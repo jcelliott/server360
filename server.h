@@ -48,6 +48,7 @@ private:
   Handler h;
   bool debug;
   Config & config;
+  int timeout;
 
 };
 

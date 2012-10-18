@@ -12,17 +12,14 @@ Server::Server(int _port, Config & _config, bool _debug)
       : port(_port), config(_config), debug(_debug) { 
 
   setup();
-  cout << "The server is setup!" << endl;
-
+  if(debug) cout << "Server listening on port " << port << endl;
 }
 
-Server::~Server() {
+Server::~Server() {}
 
-}
-
-void Server::start() {
-  cout << "You can't actually start this yet." << endl;
-}
+// void Server::start() {
+//   cout << "You can't actually start this yet." << endl;
+// }
 
 // int main(int argc, char **argv) {
 void Server::setup() {
@@ -61,9 +58,10 @@ void Server::setup() {
   }
 
   clientlen = sizeof(client);
+  timeout = atoi(config.parameter("timeout").c_str());
 }
 
-void Server::not_implemented_yet() {
+void Server::start() {
 
   int epfd = epoll_create(1);
 

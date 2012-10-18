@@ -1,6 +1,9 @@
 #include "handler.h"
 
+using namespace std;
+
 Handler::Handler() {}
+
 Handler::~Handler() {}
 
 bool Handler::handle(int client) {

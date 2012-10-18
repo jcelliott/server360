@@ -1,15 +1,15 @@
 # Joshua Elliott
 # Makefile for CS360 Lab 4: Web Server
 
-CXX=	g++ -g
+CXX=	g++
 SERVEROBJS=	web.o server.o handler.o
 OBJS =	$(SERVEROBJS)
 
-SLIBS= util/libconfig.a
+SLIBS= util/libconfig.a util/libhttp.a
 LIBS= -lrt -O2
 
-# CCFLAGS= -g
-CCFLAGS=
+CXXFLAGS= -g
+# CCFLAGS=
 
 .PHONY: all clean realclean
 
@@ -18,8 +18,8 @@ all: server
 server: $(SERVEROBJS) $(SLIBS)
 	$(CXX) -o web $(SERVEROBJS) $(SLIBS) $(LIBS)
 
-util/libconfig.a :
-	@ make -C util libconfig.a
+$(SLIBS) :
+	@ make -C util all
 
 clean:
 	rm -f $(OBJS) $(OBJS:.o=.d)
