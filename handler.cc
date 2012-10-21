@@ -2,86 +2,98 @@
 
 using namespace std;
 
-Handler::Handler() {}
+Handler::Handler(int _client, Config & _config, bool _debug) 
+    : client(_client), config(_config), debug(_debug) {
+  req = NULL;
+  res = NULL;
+}
 
 Handler::~Handler() {}
 
-HTTPRequest* Handler::readHead() {
+bool Handler::handle() {
+  if (req == NULL)
+    return readRequest();
 
-  string read = "";
-  leftover = "";
-  char *buf = (char *) calloc(BUFSIZE,sizeof(char));
-  int endOfHead = 0;
-
-  while ((endOfHead = read.find("\r\n\r\n")) == string::npos) {
-    memset(buf,0,BUFSIZE);
-    int nread = recv(sock,buf,BUFSIZE,0);
-    if (nread < 0) {
-      if (errno == EINTR)
-        // the socket call was interrupted -- try again
-        continue;
-      else
-        // an error occurred, so break out
-        if(debug) cout << "An error occurred in readHead()" << endl;
-      break;
-    } else if (nread == 0) {
-      // the socket is closed
-      if(debug) cout << "The socket is closed in readHead()" << endl;
-      break;
-    }
-    read.append(buf, nread);
-
-    // if(debug) cout << "received: " << buf;
-  }
-  if(read.length() > endOfHead + 4) {
-    leftover = read.substr(endOfHead + 4);
-  }
-
-  // TODO: check this, it was just copypastad
-  HTTPRequest* req = new HTTPRequest();
-  req->parse(read);
-  if(debug) cout << "Response:\n" << req->str() << endl;
-  return req;
+  if (res == NULL)
+    return createResponse();
 }
 
-bool Handler::handle(int client) {
-  char *ptr;
+// Reads once from the socket. Returns false if an error occurred.
+bool Handler::readRequest() {
 
-  // read a request
-  memset(buf_,0,1501);
-  int nread = recv(client,buf_,1500,0);
+  char *buf = (char *) calloc(BUFSIZE,sizeof(char));
+  memset(buf,0,BUFSIZE);
+
+  int nread = recv(client,buf,BUFSIZE,0);
   if (nread < 0) {
     if (errno == EINTR)
       // the socket call was interrupted -- try again
       return true;
-    // an error occurred so stop processing
-    perror("recv");
-    return false;
+    else
+      // an error occurred, so break out
+      if(debug) cout << "An error occurred in readHead()" << endl;
+      return false;
   } else if (nread == 0) {
     // the socket is closed
+    if(debug) cout << "The socket is closed in readHead()" << endl;
     return false;
   }
+  read.append(buf, nread);
 
-  // write the same data back
-  ptr = buf_;
-  int nwritten;
-  int nleft = nread;
-  while (nleft) {
-    if ((nwritten = send(client, ptr, nleft, 0)) < 0) {
-      if (errno == EINTR) {
-        // the socket call was interrupted -- try again
-        continue;
-      } else {
-        // an error occurred, so break out
-        perror("write");
-        return false;
-      }
-    } else if (nwritten == 0) {
-      // the socket is closed
-      return false;
-    }
-    nleft -= nwritten;
-    ptr += nwritten;
+  if (read.find("\r\n\r\n") == string::npos) {
+    return true;
   }
+
+  req = new HTTPRequest();
+  req->parse(read);
+  if(debug) cout << "Request:\n" << req->str() << endl;
   return true;
+}
+
+// Constructs the response object (read from files, etc.).
+bool Handler::createResponse() {
+  res = new HTTPResponse();
+  res->version("HTTP/1.1");
+  res->header("Date", date(time(NULL)));
+  // add Server header
+
+  // Check for empty method or URI (400)
+  if (req->method() == "" || req->uri() == "") {
+    res->code("400");
+    res->phrase(string("Bad Request")); 
+  }
+
+  // Check method is implemented (501)
+  if (req->method() != "GET") {
+    res->code("501");
+    res->phrase(string("Not Implemented"));
+  }
+
+  // Check if host is handled by server (400)
+  if (config.host(req->header(string("Host"))).empty()) {
+    res->code("400");
+    res->phrase(string("Bad Request"));
+  }
+
+  // Parse document path from host root and path
+
+  // Get file (check for permission (400), not found (404), error (500))
+
+  // Content-Type, Content-Length, Last-Modified headers
+
+  return true;
+}
+
+string Handler::date ( time_t t )
+{
+  struct tm * gmt ;
+  char buf [200];
+  memset ( buf ,0 ,200);
+  gmt = gmtime (& t );
+  if ( gmt == NULL )
+    return " " ;
+  if ( strftime ( buf , sizeof ( buf ) ,
+        " %a , % d % b % Y % H :% M :% S GMT " , gmt ) == 0)
+    return " " ;
+  return string ( buf );
 }

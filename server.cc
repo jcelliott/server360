@@ -79,8 +79,10 @@ void Server::start() {
       perror("epoll");
       exit(EXIT_FAILURE);
     }
-    if (nfds == 0)
+    if (nfds == 0) {
+      // timeout
       continue;
+    }
 
     // handle sockets that are ready
     for(int i = 0; i < nfds; i++) {

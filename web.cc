@@ -13,7 +13,7 @@ using namespace std;
 int main(int argc, char **argv) {
   
   // setup default arguments
-  int port = 3000;
+  int port = 8080;
   bool debug = false;
 
   int option;

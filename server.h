@@ -10,6 +10,7 @@
 
 // C includes
 #include <arpa/inet.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/epoll.h>
 #include <unistd.h>
@@ -35,8 +36,6 @@ public:
   // Start the web server
   void start();
 
-  void not_implemented_yet();
-
 private:
   // Setup server
   void setup();
@@ -45,10 +44,12 @@ private:
   socklen_t clientlen;
   int option, port, s, c;
   int opt;
-  Handler h;
+  // Handler h;
   bool debug;
   Config & config;
   int timeout;
+
+  map<int, Handler*> handlers;
 
 };
 
