@@ -60,19 +60,19 @@ bool Handler::createResponse() {
   // Check for empty method or URI (400)
   if (req->method() == "" || req->uri() == "") {
     res->code("400");
-    res->phrase(string("Bad Request")); 
+    res->phrase("Bad Request"); 
   }
 
   // Check method is implemented (501)
   if (req->method() != "GET") {
     res->code("501");
-    res->phrase(string("Not Implemented"));
+    res->phrase("Not Implemented");
   }
 
   // Check if host is handled by server (400)
-  if (config.host(req->header(string("Host"))).empty()) {
+  if (config.host(req->header("Host")).empty()) {
     res->code("400");
-    res->phrase(string("Bad Request"));
+    res->phrase("Bad Request");
   }
 
   // Parse document path from host root and path
