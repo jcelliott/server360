@@ -10,6 +10,7 @@
 
 #include "util/http/HTTPRequest.h"
 #include "util/http/HTTPResponse.h"
+#include "util/http/URL.h"
 #include "util/config/Config.h"
 
 #define BUFSIZE 1024
@@ -30,7 +31,7 @@ private:
   bool readRequest();
 
   // Constructs the response object (read from files, etc.). Returns false if an error occurred.
-  bool createResponse();
+  void createResponse();
 
   string date ( time_t t );
 

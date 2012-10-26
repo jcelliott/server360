@@ -15,7 +15,7 @@ bool Handler::handle() {
     return readRequest();
 
   if (res == NULL)
-    return createResponse();
+    createResponse();
 }
 
 // Reads once from the socket. Returns false if an error occurred.
@@ -51,37 +51,49 @@ bool Handler::readRequest() {
 }
 
 // Constructs the response object (read from files, etc.).
-bool Handler::createResponse() {
+void Handler::createResponse() {
   res = new HTTPResponse();
   res->version("HTTP/1.1");
   res->header("Date", date(time(NULL)));
+  res->header("Server", "Server360");
   // add Server header
 
   // Check for empty method or URI (400)
   if (req->method() == "" || req->uri() == "") {
     res->code("400");
     res->phrase("Bad Request"); 
+    return;
   }
 
   // Check method is implemented (501)
   if (req->method() != "GET") {
     res->code("501");
     res->phrase("Not Implemented");
+    return;
   }
 
   // Check if host is handled by server (400)
   if (config.host(req->header("Host")).empty()) {
     res->code("400");
     res->phrase("Bad Request");
+    return;
   }
 
   // Parse document path from host root and path
+  string path = config.host(req->header("Host"));
+  URL url;
+  url.parse(req->uri());
+  if (url.path().compare("/") == 0) {
+    path += "/index.html";
+  } else {
+    path += url.path();
+  }
 
   // Get file (check for permission (400), not found (404), error (500))
 
   // Content-Type, Content-Length, Last-Modified headers
 
-  return true;
+  return;
 }
 
 string Handler::date ( time_t t )
