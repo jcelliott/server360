@@ -1,6 +1,7 @@
 // C includes
 #include <errno.h>
 // #include <stdio.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 // #include <sys/types.h>
@@ -33,6 +34,10 @@ private:
   // Constructs the response object (read from files, etc.). Returns false if an error occurred.
   void createResponse();
 
+  // try to get a file descriptor
+  void getFile(string path);
+
+  // Get the date and time for the header
   string date ( time_t t );
 
   char buf_[1600];

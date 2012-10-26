@@ -89,11 +89,33 @@ void Handler::createResponse() {
     path += url.path();
   }
 
+  getFile(path);
+
   // Get file (check for permission (400), not found (404), error (500))
 
   // Content-Type, Content-Length, Last-Modified headers
 
   return;
+}
+
+// try to get a file descriptor
+void Handler::getFile(string path) {
+  int file = open(path.c_str(), NULL);
+  if (file == -1) {
+    // There was an error
+    if (errno == EACCES) {
+      // 403 Forbidden
+      res->code("403");
+      res->phrase("Bad Request");
+    } else if (errno == ENOENT) {
+      res->code("404");
+      res->phrase("Not Found");
+    } else {
+      res->code("500");
+      res->phrase("Internal Server Error");
+    }
+  }
+
 }
 
 string Handler::date ( time_t t )
