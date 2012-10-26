@@ -49,6 +49,7 @@ private:
   Config & config;
   int timeout;
 
+  // map the file descriptors to their handlers
   map<int, Handler*> handlers;
 
 };

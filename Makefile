@@ -5,7 +5,7 @@ CXX=	g++
 SERVEROBJS=	web.o server.o handler.o
 OBJS =	$(SERVEROBJS)
 
-SLIBS= util/libconfig.a util/libhttp.a
+SLIBS= util/libconfig.a util/libhttp.a util/tri_logger.o
 LIBS= -lrt -O2
 
 CXXFLAGS= -g

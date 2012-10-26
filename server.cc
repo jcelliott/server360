@@ -100,7 +100,8 @@ void Server::start() {
         epoll_ctl(epfd, EPOLL_CTL_ADD, c, &ev);
       } else {
         // handle client
-        bool result = h.handle(fd);
+        // bool result = h.handle(fd);
+        bool result = handlers[fd]->handle();
         if (!result) {
           // socket closed, so remove it from poller
           ev.events = EPOLLIN;
