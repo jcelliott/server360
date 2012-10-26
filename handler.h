@@ -13,6 +13,7 @@
 #include "util/http/HTTPResponse.h"
 #include "util/http/URL.h"
 #include "util/config/Config.h"
+#include "util/logger.h"
 
 #define BUFSIZE 1024
 
@@ -20,7 +21,7 @@ using namespace std;
 
 class Handler {
 public:
-  Handler(int _client, Config & _config, bool _debug);
+  Handler(int _client, Config & _config, Logger & log);
   ~Handler();
 
   // Handle a client request, returns true if the server should keep handling
@@ -47,5 +48,7 @@ private:
   string read;
   HTTPRequest* req;
   HTTPResponse* res;
+
+  Logger & log;
 };
 

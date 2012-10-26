@@ -22,6 +22,7 @@
 // local includes
 #include "handler.h"
 #include "util/config/Config.h"
+#include "util/logger.h"
 
 #define MAX_EVENTS 1000
 
@@ -30,7 +31,7 @@ using namespace std;
 
 class Server {
 public:
-  Server(int port, Config & config, bool debug = false);
+  Server(int port, Config & config, Logger & log);
   ~Server();
 
   // Start the web server
@@ -45,12 +46,13 @@ private:
   int option, port, s, c;
   int opt;
   // Handler h;
-  bool debug;
   Config & config;
   int timeout;
 
   // map the file descriptors to their handlers
   map<int, Handler*> handlers;
+  
+  Logger & log;
 
 };
 

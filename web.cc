@@ -7,6 +7,7 @@
 
 #include "server.h"
 #include "util/config/Config.h"
+#include "util/logger.h"
 
 using namespace std;
 
@@ -33,9 +34,13 @@ int main(int argc, char **argv) {
     }
   }
 
+  Logger & log = Logger::GetLog();
   if(debug) {
-    cout << "Debugging output ON" << endl;
-    cout << "Server starting... " << endl;
+    log.SetMinPriority(Logger::INFO);
+    log << Logger::info << "Log output ON\n";
+    log << Logger::info << "Server starting...\n";
+  } else {
+    log.Mute();
   }
 
   // get config parameters
@@ -43,7 +48,8 @@ int main(int argc, char **argv) {
   config.parse("web.conf");
 
   // start server
-  Server s(port, config, debug);
+  Server s(port, config, log);
   s.start();
 
 }
+

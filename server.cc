@@ -8,11 +8,12 @@
 
 using namespace std;
 
-Server::Server(int _port, Config & _config, bool _debug)
-      : port(_port), config(_config), debug(_debug) { 
+Server::Server(int _port, Config & _config, Logger & _log)
+      : port(_port), config(_config), log(_log) { 
 
   setup();
-  if(debug) cout << "Server listening on port " << port << endl;
+  // if(debug) cout << "Server listening on port " << port << endl;
+  log << Logger::info << "Server listening on port " << port << Logger::endl;
 }
 
 Server::~Server() {}
@@ -23,14 +24,17 @@ Server::~Server() {}
 
 // int main(int argc, char **argv) {
 void Server::setup() {
+  log << Logger::debug << "Server.setup()\n";
 
   // setup socket address structure
+  log << Logger::debug << "setup socket address structure\n";
   memset(&server,0,sizeof(server));
   server.sin_family = AF_INET;
   server.sin_port = htons(port);
   server.sin_addr.s_addr = INADDR_ANY;
 
   // create socket
+  log <<Logger::debug << "create socket\n";
   s = socket(PF_INET,SOCK_STREAM,0);
   if (!s) {
     perror("socket");
@@ -44,14 +48,15 @@ void Server::setup() {
     exit(-1);
   }
 
-  // call bind to associate the socket with our local address and
-  // port
+  // call bind to associate the socket with our local address and port
+  log << Logger::debug << "bind socket\n";
   if (bind(s,(const struct sockaddr *)&server,sizeof(server)) < 0) {
     perror("bind");
     exit(-1);
   }
 
   // convert the socket to listen for incoming connections
+  log << Logger::debug << "listen on socket\n";
   if (listen(s,SOMAXCONN) < 0) {
     perror("listen");
     exit(-1);
@@ -62,10 +67,12 @@ void Server::setup() {
 }
 
 void Server::start() {
+  log << Logger::info << "Server.start()\n";
 
   int epfd = epoll_create(1);
 
   // add listening socket to poller
+  log << Logger::debug << "Add listening socket to poller\n";
   static struct epoll_event ev;
   ev.events = EPOLLIN;
   ev.data.fd = s;
@@ -95,8 +102,11 @@ void Server::start() {
           break;
         }
         // add new client to poller
+        log << Logger::info << "client connected\n";
         ev.events = EPOLLIN;
         ev.data.fd = c;
+        // create a new handler for this client
+        handlers[c] = new Handler(c, config, log);
         epoll_ctl(epfd, EPOLL_CTL_ADD, c, &ev);
       } else {
         // handle client

@@ -2,8 +2,9 @@
 
 using namespace std;
 
-Handler::Handler(int _client, Config & _config, bool _debug) 
-    : client(_client), config(_config), debug(_debug) {
+Handler::Handler(int _client, Config & _config, Logger & _log) 
+    : client(_client), config(_config), log(_log) {
+  log << Logger::info << "Created new handler for client: " << client << Logger::endl;
   req = NULL;
   res = NULL;
 }
@@ -100,7 +101,7 @@ void Handler::createResponse() {
 
 // try to get a file descriptor
 void Handler::getFile(string path) {
-  int file = open(path.c_str(), NULL);
+  int file = open(path.c_str(), 0);
   if (file == -1) {
     // There was an error
     if (errno == EACCES) {
