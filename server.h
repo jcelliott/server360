@@ -25,6 +25,8 @@
 #include "util/logger.h"
 
 #define MAX_EVENTS 1000
+#define MAX_WAIT   1000
+#define NANOSEC    1000000000.0
 
 using namespace std;
 

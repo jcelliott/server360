@@ -18,11 +18,7 @@ Server::Server(int _port, Config & _config, Logger & _log)
 
 Server::~Server() {}
 
-// void Server::start() {
-//   cout << "You can't actually start this yet." << endl;
-// }
-
-// int main(int argc, char **argv) {
+// prepares server to be started
 void Server::setup() {
   log << Logger::debug << "Server.setup()\n";
 
@@ -81,7 +77,7 @@ void Server::start() {
   while (1) {
     // do poll
     struct epoll_event events[MAX_EVENTS];
-    int nfds = epoll_wait(epfd, events, MAX_EVENTS, 1000);
+    int nfds = epoll_wait(epfd, events, MAX_EVENTS, MAX_WAIT);
     if (nfds < 0) {
       perror("epoll");
       exit(EXIT_FAILURE);
@@ -90,7 +86,7 @@ void Server::start() {
     // handle timeouts
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    double current = ts.tv_sec + ts.tv_nsec/1000000000.0;
+    double current = ts.tv_sec + ts.tv_nsec/NANOSEC;
     // log << Logger::debug << "current time: " << current << Logger::endl;
     map<int, Handler*>::iterator it;
     vector<int> timeouts;
