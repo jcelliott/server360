@@ -4,10 +4,13 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
-// #include <sys/types.h>
+#include <sys/sendfile.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+// #include <sys/types.h>
 
 #include <iostream>
+#include <sstream>
 
 #include "util/http/HTTPRequest.h"
 #include "util/http/HTTPResponse.h"
@@ -15,7 +18,7 @@
 #include "util/config/Config.h"
 #include "util/logger.h"
 
-#define BUFSIZE 1024
+#define BUFSIZE 2048
 
 using namespace std;
 
@@ -32,8 +35,14 @@ private:
   // Reads once from the socket. Returns false if an error occurred.
   bool readRequest();
 
+  // Gets a single request from the read buffer
+  bool getRequest();
+
   // Constructs the response object (read from files, etc.). Returns false if an error occurred.
   void createResponse();
+
+  // Sends the headers and if possible a file to the client
+  bool sendResponse();
 
   // try to get a file descriptor
   void getFile(string path);
@@ -41,8 +50,11 @@ private:
   // Get the date and time for the header
   string date ( time_t t );
 
+  // Clean up and reset handler state
+  void cleanup();
+
   char buf_[1600];
-  int client;
+  int client, resFile;
   Config & config;
   bool debug;
   string read;
