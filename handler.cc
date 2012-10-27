@@ -4,7 +4,7 @@ using namespace std;
 
 Handler::Handler(int _client, Config & _config, Logger & _log) 
     : client(_client), config(_config), log(_log) {
-  log << Logger::info << "Created new handler for client: " << client << Logger::endl;
+  log << Logger::debug << "Created new handler for client: " << client << Logger::endl;
   resFile = 0;
   updateTime();
 }

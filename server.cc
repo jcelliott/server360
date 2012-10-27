@@ -67,7 +67,7 @@ void Server::setup() {
 }
 
 void Server::start() {
-  log << Logger::info << "Server.start()\n";
+  log << Logger::debug << "Server.start()\n";
 
   int epfd = epoll_create(1);
 
