@@ -40,6 +40,7 @@ bool Handler::sendResponse() {
   log << Logger::debug << "sendResponse()\n";
   // convert response to string
   string resStr = res->str();
+  log << Logger::info << "Response:\n" << resStr;
 
   // send headers
   char buf[resStr.length()];
@@ -69,6 +70,7 @@ bool Handler::sendResponse() {
 
   // send a file if we have one
   if (resFile != 0) {
+    log << Logger::info << "Sending a file: " << resFile << Logger::endl;
     size_t count = atoi(res->header("Content-Size").c_str());
     while (count > 0) {
       int sent = sendfile(resFile, client, NULL, count);
@@ -80,7 +82,6 @@ bool Handler::sendResponse() {
       count -= sent;
     }
   }
-
 }
 
 // Gets a single request from the read buffer
@@ -92,11 +93,18 @@ bool Handler::getRequest() {
     return false;
   }
 
-  string reqStr = read.substr(0, endOfReq + 3);
-  read = read.substr(endOfReq + 4);
+  string reqStr = read.substr(0, endOfReq + 4);
+  // log << Logger::debug << "Request string: " << reqStr << Logger::endl;
+  if (read.length() > endOfReq + 1) {
+    read = read.substr(endOfReq + 4);
+  } else {
+    read = "";
+  }
   req = new HTTPRequest();
   req->parse(reqStr);
-  log << Logger::info << "Request:\n" << req->str() << Logger::endl;
+  // get rid of annoying blank lines: only print req if it isn't all whitespace
+  log << Logger::info << "Request:\n" 
+      << ((req->str().find_first_not_of(" \t\n\r") == string::npos)?(""):(req->str()));
   return true;
 }
 
@@ -114,11 +122,11 @@ bool Handler::readRequest() {
       return true;
     else
       // an error occurred, so break out
-      log << Logger::error << "An error occurred in readHead()\n";
+      log << Logger::error << "An error occurred in readRequest()\n";
       return false;
   } else if (nread == 0) {
     // the socket is closed
-    log << Logger::error << "The socket is closed in readHead()\n";
+    log << Logger::error << "The socket is closed in readRequest()\n";
     return false;
   }
   read.append(buf, nread);
@@ -135,8 +143,14 @@ void Handler::createResponse() {
   // add Server header
 
   // Check for empty method or URI (400)
-  if (req->method() == "" || req->uri() == "") {
-    log << Logger::warning << "empty method or URI\n";
+  if (req->method().empty()) {
+    log << Logger::warning << "empty method\n";
+    res->code("400");
+    res->phrase("Bad Request"); 
+    return;
+  }
+  if (req->uri().empty()) {
+    log << Logger::warning << "empty URI\n";
     res->code("400");
     res->phrase("Bad Request"); 
     return;
@@ -159,15 +173,17 @@ void Handler::createResponse() {
   }
 
   // Parse document path from host root and path
+  log << Logger::debug << "parsing path\n";
   string path = config.host(req->header("Host"));
   URL url;
   url.parse(req->uri());
+  log << Logger::debug << "parsed uri\n";
   if (url.path().compare("/") == 0) {
     path.append("/index.html");
   } else {
     path.append(url.path());
   }
-  log << Logger::info << "parsed path: " << path << Logger::endl;
+  log << Logger::debug << "parsed path: " << path << Logger::endl;
 
   getFile(path);
 
@@ -239,13 +255,12 @@ string Handler::date ( time_t t )
 {
   struct tm * gmt ;
   char buf [200];
-  memset ( buf ,0 ,200);
+  memset (buf, 0, 200);
   gmt = gmtime (& t );
-  if ( gmt == NULL )
-    return " " ;
-  if ( strftime ( buf , sizeof ( buf ) ,
-        " %a , % d % b % Y % H :% M :% S GMT " , gmt ) == 0)
-    return " " ;
-  return string ( buf );
+  if (gmt == NULL)
+    return "";
+  if (strftime (buf, sizeof(buf), " %a, %d %b %Y %H:%M:%S GMT", gmt) == 0)
+    return "" ;
+  return string(buf);
 }
 

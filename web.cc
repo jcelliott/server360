@@ -17,31 +17,34 @@ int main(int argc, char **argv) {
   int port = 8080;
   bool debug = false;
 
-  int option;
+  Logger & log = Logger::GetLog();
+
   // process command line options using getopt()
   // see "man 3 getopt"
-  while ((option = getopt(argc,argv,"p:d")) != -1) {
+  int option;
+  while ((option = getopt(argc,argv,"p:dv")) != -1) {
     switch (option) {
       case 'p':
         port = atoi(optarg);
+        log.Mute();
         break;
       case 'd':
-        debug = true;
+        log.SetMinPriority(Logger::INFO);
+        break;
+      case 'v':
+        log.SetMinPriority(Logger::DEBUG);
         break;
       default:
-        cout << "server [-p port] [-d]" << endl;
+        cout << "server [-p port] [-d]" << endl
+             << "-d show informational debugging output" << endl
+             << "-v show verbose debugging output" << endl;
         exit(EXIT_FAILURE);
     }
   }
 
-  Logger & log = Logger::GetLog();
-  if(debug) {
-    log.SetMinPriority(Logger::INFO);
-    log << Logger::info << "Log output ON\n";
-    log << Logger::info << "Server starting...\n";
-  } else {
-    log.Mute();
-  }
+  log << Logger::info << "Log output ON\n";
+  log << Logger::debug << "Verbose debugging output ON\n";
+  log << Logger::info << "Server starting...\n";
 
   // get config parameters
   Config config;

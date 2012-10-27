@@ -16,9 +16,9 @@ CXXFLAGS= -g
 all: server
 
 server: $(SERVEROBJS) $(SLIBS)
-	$(CXX) -o web $(SERVEROBJS) $(SLIBS) $(LIBS)
+	$(CXX) $(CXXFLAGS) -o web $(SERVEROBJS) $(SLIBS) $(LIBS)
 
-$(SLIBS) :
+$(SLIBS):
 	@ make -C util all
 
 clean:
