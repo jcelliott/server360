@@ -102,7 +102,7 @@ void Server::start() {
           break;
         }
         // add new client to poller
-        log << Logger::info << "client connected\n";
+        log << Logger::info << "client connected: " << c << Logger::endl;
         ev.events = EPOLLIN;
         ev.data.fd = c;
         // create a new handler for this client
@@ -116,8 +116,10 @@ void Server::start() {
           // socket closed, so remove it from poller
           ev.events = EPOLLIN;
           ev.data.fd = fd;
+          delete handlers[fd];
           epoll_ctl(epfd, EPOLL_CTL_DEL, fd, &ev);
           close(fd);
+          log << Logger::info << "client disconnected: " << fd << Logger::endl;
         }
       }
     }

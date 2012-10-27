@@ -1,12 +1,12 @@
 # Joshua Elliott
 # Makefile for config static library
 
-OBJS= config/Config.o config/Tokenizer.o http/HTTPRequest.o http/HTTPResponse.o http/Tokenizer.o http/URL.o tri_logger.o
+OBJS= config/Config.o config/Tokenizer.o http/HTTPRequest.o http/HTTPResponse.o http/Tokenizer.o http/URL.o
 LIBS= libconfig.a libhttp.a
 
 .PHONY: all clean realclean
 
-all : $(LIBS) tri_logger.o
+all : $(LIBS)
 
 # config
 libconfig.a : config/Config.o config/Tokenizer.o
@@ -33,10 +33,6 @@ http/URL.o : http/URL.cc http/URL.h
 
 http/Tokenizer.o : http/Tokenizer.cc http/Tokenizer.h
 	g++ -o http/Tokenizer.o -c -I http http/Tokenizer.cc
-
-# logger
-tri_logger.o : tri_logger.cpp tri_logger.hpp nullstream.hpp
-	g++ -o tri_logger.o -c tri_logger.cpp -DTLOG
 
 clean:
 	rm -f $(OBJS)
