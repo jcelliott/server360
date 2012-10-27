@@ -18,6 +18,7 @@ int main(int argc, char **argv) {
   bool debug = false;
 
   Logger & log = Logger::GetLog();
+  log.Mute();
 
   // process command line options using getopt()
   // see "man 3 getopt"
@@ -26,12 +27,13 @@ int main(int argc, char **argv) {
     switch (option) {
       case 'p':
         port = atoi(optarg);
-        log.Mute();
         break;
       case 'd':
+        log.Unmute();
         log.SetMinPriority(Logger::INFO);
         break;
       case 'v':
+        log.Unmute();
         log.SetMinPriority(Logger::DEBUG);
         break;
       default:

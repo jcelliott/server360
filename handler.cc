@@ -71,15 +71,18 @@ bool Handler::sendResponse() {
   // send a file if we have one
   if (resFile != 0) {
     log << Logger::info << "Sending a file: " << resFile << Logger::endl;
-    size_t count = atoi(res->header("Content-Size").c_str());
+    size_t count = atoi(res->header("Content-Length").c_str());
     while (count > 0) {
-      int sent = sendfile(resFile, client, NULL, count);
+      int sent = sendfile(client, resFile, NULL, count);
       if (sent < 0) {
-        log << Logger::error << "Error sending file\n";
-        perror("sendfile");
+        log << Logger::error << "Error sending file: " << strerror(errno) << Logger::endl;
         return false;
       }
       count -= sent;
+    }
+    int status = close(resFile);
+    if (status != 0) {
+      log << Logger::error << "Error closing file: " << strerror(errno) << Logger::endl;
     }
   }
 }
@@ -89,13 +92,13 @@ bool Handler::getRequest() {
 
   size_t endOfReq = read.find("\r\n\r\n");
   if (endOfReq == string::npos) {
-    log << Logger::debug << "Didn't read enough to get a full request\n";
+    log << Logger::debug << "getRequest() didn't read enough to get a full request\n";
     return false;
   }
 
   string reqStr = read.substr(0, endOfReq + 4);
   // log << Logger::debug << "Request string: " << reqStr << Logger::endl;
-  if (read.length() > endOfReq + 1) {
+  if (read.length() > endOfReq + 4) {
     read = read.substr(endOfReq + 4);
   } else {
     read = "";
@@ -130,6 +133,7 @@ bool Handler::readRequest() {
     return false;
   }
   read.append(buf, nread);
+  free(buf);
   return true;
 }
 
@@ -164,6 +168,13 @@ void Handler::createResponse() {
     return;
   }
 
+  // fix for host header including :port
+  string host = req->header("Host");
+  size_t port = host.find(':');
+  if (port != string::npos) {
+    req->header("Host", host.substr(0, port));
+  }
+  log << Logger::debug << "Host: " << req->header("Host") << Logger::endl;
   // Check if host is handled by server (400)
   if (config.host(req->header("Host")).empty()) {
     log << Logger::warning << "host is not handled by this server\n";
@@ -175,13 +186,10 @@ void Handler::createResponse() {
   // Parse document path from host root and path
   log << Logger::debug << "parsing path\n";
   string path = config.host(req->header("Host"));
-  URL url;
-  url.parse(req->uri());
-  log << Logger::debug << "parsed uri\n";
-  if (url.path().compare("/") == 0) {
+  if (req->uri().compare("/") == 0) {
     path.append("/index.html");
   } else {
-    path.append(url.path());
+    path.append(req->uri());
   }
   log << Logger::debug << "parsed path: " << path << Logger::endl;
 
@@ -194,8 +202,9 @@ void Handler::createResponse() {
 void Handler::getFile(string path) {
   log << Logger::debug << "getFile()\n";
   // Get file (check for permission (400), not found (404), error (500))
-  int file = open(path.c_str(), 0);
+  int file = open(path.c_str(), O_RDONLY);
   if (file == -1) {
+    log << Logger::error << "there was an error opening file: " << strerror(errno) << Logger::endl;
     // There was an error
     if (errno == EACCES) {
       // 403 Forbidden
@@ -207,9 +216,15 @@ void Handler::getFile(string path) {
       log << Logger::warning << "404 Not Found\n";
       res->code("404");
       res->phrase("Not Found");
-      file = open(config.host(req->header("Host")).append("404.html").c_str(), 0);
-      if (file == -1)
+      string path404 = config.host(req->header("Host"));
+      path404.append("/404.html");
+      path = path404;
+      file = open(path404.c_str(), O_RDONLY);
+      // file = open(config.host(req->header("Host")).append("/404.html").c_str(), O_RDONLY);
+      if (file == -1) {
+        log << Logger::error << "could not open 404.html\n";
         return;
+      }
     } else {
       log << Logger::error << "500 Internal Server Error\n";
       res->code("500");
@@ -229,7 +244,7 @@ void Handler::getFile(string path) {
   res->header("Last-Modified", date(st.st_mtime));
   stringstream s;
   s << st.st_size;
-  res->header("Content-Size", s.str());
+  res->header("Content-Length", s.str());
 
   // We've validated everything, now we know we can send the file
   resFile = file;
@@ -240,8 +255,10 @@ void Handler::getFile(string path) {
   if (extloc == string::npos) {
     res->header("Content-Type", "text/plain");
   } else {
-    string ext = path.substr(extloc);
+    string ext = path.substr(extloc + 1);
+    log << Logger::debug << "file extension: " << ext << Logger::endl;
     string type = config.media(ext);
+    log << Logger::debug << "content-type: " << type << Logger::endl;
     if (type.empty()) {
       res->header("Content-Type", "text/plain");
     } else {
