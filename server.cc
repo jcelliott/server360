@@ -63,7 +63,7 @@ void Server::setup() {
   }
 
   clientlen = sizeof(client);
-  timeout = atoi(config.parameter("timeout").c_str());
+  idleTimeout = atoi(config.parameter("timeout").c_str());
 }
 
 void Server::start() {
@@ -72,7 +72,7 @@ void Server::start() {
   int epfd = epoll_create(1);
 
   // add listening socket to poller
-  log << Logger::debug << "Add listening socket to poller\n";
+  log << Logger::debug << "Add listening socket to poller: " << s << Logger::endl;
   static struct epoll_event ev;
   ev.events = EPOLLIN;
   ev.data.fd = s;
@@ -81,11 +81,30 @@ void Server::start() {
   while (1) {
     // do poll
     struct epoll_event events[MAX_EVENTS];
-    int nfds = epoll_wait(epfd, events, MAX_EVENTS, 1);
+    int nfds = epoll_wait(epfd, events, MAX_EVENTS, 1000);
     if (nfds < 0) {
       perror("epoll");
       exit(EXIT_FAILURE);
     }
+
+    // handle timeouts
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    double current = ts.tv_sec + ts.tv_nsec/1000000000.0;
+    // log << Logger::debug << "current time: " << current << Logger::endl;
+    map<int, Handler*>::iterator it;
+    vector<int> timeouts;
+    for (it=handlers.begin(); it != handlers.end(); it++) {
+      if (current - (*it).second->lastEvent() > idleTimeout) {
+        timeouts.push_back((*it).first);
+      }
+    }
+    for (int j=0; j < timeouts.size(); j++) {
+      log << Logger::debug << "client timed out: " << timeouts[j] << Logger::endl;
+      handlers.erase(timeouts[j]);
+      close(timeouts[j]);
+    }
+    
     if (nfds == 0) {
       // timeout
       continue;

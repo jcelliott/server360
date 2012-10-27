@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
         log.SetMinPriority(Logger::DEBUG);
         break;
       default:
-        cout << "server [-p port] [-d]" << endl
+        cout << "server [-p port] [-d] [-v]" << endl
              << "-d show informational debugging output" << endl
              << "-v show verbose debugging output" << endl;
         exit(EXIT_FAILURE);

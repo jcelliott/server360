@@ -45,9 +45,8 @@ private:
   socklen_t clientlen;
   int option, port, s, c;
   int opt;
-  // Handler h;
   Config & config;
-  int timeout;
+  int idleTimeout;
 
   // map the file descriptors to their handlers
   map<int, Handler*> handlers;

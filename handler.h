@@ -30,6 +30,9 @@ public:
   // requests for this client, otherwise returns false.
   bool handle();
 
+  // returns the timestamp of the most recent io event that occurred on this handler
+  double lastEvent();
+
 private:
   // Reads once from the socket. Returns false if an error occurred.
   bool readRequest();
@@ -49,17 +52,20 @@ private:
   // Get the date and time for the header
   string date ( time_t t );
 
+  // Update last_event time
+  void updateTime();
+
   // Clean up and reset handler state
   void cleanup();
 
   char buf_[1600];
   int client, resFile;
   Config & config;
-  bool debug;
   string read;
   HTTPRequest* req;
   HTTPResponse* res;
 
+  double _lastEvent;
   Logger & log;
 };
 

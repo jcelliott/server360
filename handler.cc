@@ -6,9 +6,12 @@ Handler::Handler(int _client, Config & _config, Logger & _log)
     : client(_client), config(_config), log(_log) {
   log << Logger::info << "Created new handler for client: " << client << Logger::endl;
   resFile = 0;
+  updateTime();
 }
 
-Handler::~Handler() {}
+Handler::~Handler() {
+  // cleanup();
+}
 
 bool Handler::handle() {
   if (!readRequest())
@@ -22,7 +25,20 @@ bool Handler::handle() {
       return false;
     cleanup();
   }
+  updateTime();
   return true;
+}
+
+// Update last_event time
+void Handler::updateTime() {
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  _lastEvent = ts.tv_sec + ts.tv_nsec/1000000000.0;
+}
+
+// returns the timestamp of the most recent io event that occurred on this handler
+double Handler::lastEvent() {
+  return _lastEvent;
 }
 
 // Clean up and reset handler state
